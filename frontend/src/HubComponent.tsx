@@ -1,21 +1,32 @@
-import {useEffect, useState} from "react"
-import Connector from "./signalr-connection"
+//import {useMemo} from "react"
+import {useEffect} from "react"
+import useChatroomConnection from "./signalr-connection"
+
 export function HubComponent() {
-  const {newMessage, events} = Connector()
-  const [message, setMessage] = useState("initial value")
-  useEffect(() => {
-    events((user, message) => {
-      console.log("mensaje recibido")
-      return setMessage(user + " says " + message)
-    })
-  })
+  const roomId = "1"
+  const {messages, sendMessage, JoinRoom} = useChatroomConnection()
+  console.log("current messages", messages)
   return (
     <div className="App">
       <span>
-        message from signalR: <span style={{color: "green"}}>{message}</span>{" "}
+        message from signalR:
+        <span style={{color: "green"}}>
+          {messages.map((x) => x.text).join(", ")}
+        </span>{" "}
       </span>
       <br />
-      <button onClick={() => newMessage(new Date().toISOString())}>send date </button>
+      <button
+        onClick={() =>
+          sendMessage({
+            text: new Date().toISOString(),
+            roomId,
+            username: "luis",
+          })
+        }
+      >
+        send new message
+      </button>
+      <button onClick={() => JoinRoom(roomId, "luis")}>join room</button>
     </div>
   )
 }

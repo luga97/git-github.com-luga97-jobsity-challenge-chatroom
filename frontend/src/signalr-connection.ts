@@ -1,37 +1,147 @@
+import {useEffect, useState, useCallback} from "react"
 import * as signalR from "@microsoft/signalr"
-const URL = "http://localhost:5149/chathub" //or whatever your backend port is
-class Connector {
-  private connection: signalR.HubConnection
-  public events: (onMessageReceived: (username: string, message: string) => void) => void
-  static instance: Connector
+const baseUrl = "http://localhost:5149" // or whatever your backend port is
+//const baseUrl = "https://localhost:7128" // or whatever your backend port is
 
-  constructor() {
-    this.connection = new signalR.HubConnectionBuilder()
-      .withUrl(URL) //TODO change to securized hub
-      .withAutomaticReconnect()
-      .build()
+type Message = {
+  roomId: string
+  username: string
+  text: string
+}
 
-    this.connection.start().catch((err) => document.write(err))
+function useChatroomConnection() {
+  const [messages, setMessages] = useState<Message[]>([])
+  const {connection} = useSignalRConnection()
+  const {isLoadingMessages, fetchMessages} = useFetchLastMessages()
 
-    this.events = (onMessageReceived) => {
-      this.connection.on("ReceiveMessage", (username, message) => {
-        onMessageReceived(username, message)
-      })
+  useEffect(() => {
+    fetchMessages("1", (messages) => {
+      setMessages((prevMessages) => [...prevMessages, ...messages])
+    })
+  }, [fetchMessages])
+
+  const newMessageHandler = useCallback(
+    (roomId: string, username: string, text: string) => {
+      console.log("recibiendo mensaje", {roomId, username, text})
+      setMessages((prevMessages) => [...prevMessages, {roomId, username, text}])
+    },
+    []
+  )
+
+  useEffect(() => {
+    if (connection) {
+      connection.on("NewMessage", newMessageHandler)
+    }
+
+    return () => {
+      if (connection) {
+        connection.off("NewMessage", newMessageHandler)
+      }
+    }
+  }, [connection, newMessageHandler])
+
+  const sendMessage = async (message: Message) => {
+    console.log(connection)
+    if (connection) {
+      try {
+        await connection.send(
+          "SendMessage",
+          message.roomId,
+          message.username,
+          message.text
+        )
+        console.log("Sent message:", message)
+      } catch (error) {
+        console.error("Error sending message:", error)
+      }
     }
   }
 
-  public newMessage = (message: string) => {
-    console.log("sending message ", message)
-    this.connection
-      .send("SendMessage", "foo", message)
-      .then(() => console.log("sent message", message))
-      .catch((error) => console.error("Error sending message:", error))
+  const JoinRoom = async (roomId: string, username: string) => {
+    if (connection) {
+      try {
+        await connection.send("JoinRoom", roomId, username)
+        console.log(`Sent join room: \nRommId=${roomId} \nUser=${username}`)
+      } catch (error) {
+        console.error(
+          `Error sending join room: \nRommId=${roomId} \nUser=${username}`,
+          error
+        )
+      }
+    }
   }
 
-  public static getInstance(): Connector {
-    if (!Connector.instance) Connector.instance = new Connector()
-    return Connector.instance
+  const leaveRoom = async (roomId: string, username: string) => {
+    if (connection) {
+      try {
+        await connection.send("JoinRoom", roomId, username)
+        console.log(`Sent leave room: \nRommId=${roomId} \nUser=${username}`)
+      } catch (error) {
+        console.error(
+          `Error sending leave room: \nRommId=${roomId} \nUser=${username}`,
+          error
+        )
+      }
+    }
+  }
+
+  return {
+    isLoadingMessages,
+    messages,
+    sendMessage,
+    JoinRoom,
+    leaveRoom,
   }
 }
 
-export default Connector.getInstance
+function useFetchLastMessages() {
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false)
+  const fetchMessages = useCallback(
+    async (roomId: string, handler: (messages: Message[]) => void) => {
+      try {
+        setIsLoadingMessages(true)
+        const response = await fetch(`${baseUrl}/Rooms/${roomId}/messages?limit=50`)
+        const data = await response.json()
+        handler(data)
+      } catch (error) {
+        console.error("Error fetching messages:", error)
+      }
+    },
+    []
+  )
+
+  return {
+    isLoadingMessages,
+    fetchMessages,
+  }
+}
+
+function useSignalRConnection() {
+  const [connection, setConnection] = useState<signalR.HubConnection | null>(null)
+
+  useEffect(() => {
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl(`${baseUrl}/chathub`) // TODO: change to securized hub
+      .withAutomaticReconnect()
+      .build()
+
+    connection
+      .start()
+      .then(() => {
+        console.log("Connection started!")
+        setConnection(connection)
+      })
+      .catch((err) => console.error("Connection failed: ", err))
+
+    return () => {
+      connection.stop().then(() => console.log("Connection stopped"))
+      setConnection(null)
+    }
+  }, [])
+
+  return {
+    connection,
+  }
+}
+
+export default useChatroomConnection
