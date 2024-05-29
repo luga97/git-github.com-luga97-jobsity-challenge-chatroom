@@ -1,7 +1,8 @@
 import "./App.css"
+import {HubComponent} from "./HubComponent"
 
 function App() {
-  return <span>Hello World</span>
+  return <HubComponent />
 }
 
 export default App
