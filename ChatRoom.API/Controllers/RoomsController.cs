@@ -1,5 +1,6 @@
 using ChatRoom.API.DTOs;
 using ChatRoom.API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,6 +8,7 @@ namespace ChatRoom.API.Controllers;
 
 [ApiController]
 [Route("[Controller]")]
+[Authorize]
 public class RoomsController(RoomService service): ControllerBase {
     /// <summary>
     /// Create a new room
@@ -27,18 +29,14 @@ public class RoomsController(RoomService service): ControllerBase {
     [HttpGet("{roomId}/Messages")]
     public IActionResult GetRoomMessages(string RoomId,[FromQuery] int? limit){
 
-        var result = service.GetRoomMessages(RoomId,limit);
-
-        if(result.IsSuccess) {
-            return Ok(result.Value);    
-        }
-        
-        return result.Exception switch
+        try
         {
-            RoomNotFoundException => NotFound("Room not found"),
-            _ => BadRequest("something went wrong")
-        };
-        
-
+            var result = service.GetRoomMessages(RoomId,limit);
+            return Ok(result);
+        }
+        catch (System.Exception e)
+        {
+            return BadRequest(e.Message);
+        }
     }
 }
