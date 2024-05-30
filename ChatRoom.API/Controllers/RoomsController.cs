@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using ChatRoom.API.DTOs;
 using ChatRoom.API.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -17,7 +18,9 @@ public class RoomsController(RoomService service): ControllerBase {
     /// <returns></returns>
     [HttpPost]
     public IActionResult CreateNewRoom([FromBody] CreateRoomDTO dto){
-        service.CreateRoom(dto);
+        var username = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if(username == null) return Unauthorized();
+        service.CreateRoom(dto,username);
         return Ok();
     }
 

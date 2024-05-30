@@ -1,17 +1,19 @@
 using ChatRoom.API.DTOs;
 using ChatRoom.API.Entities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace ChatRoom.API.Services;
 //TODO CREATE ABSTRACTION WITH -> IN MEMORY IMPL, DATABASE IMPL
 public class RoomService(AppDbContext dbContext){
 
-    public void CreateRoom(CreateRoomDTO dto){
-
+    public void CreateRoom(CreateRoomDTO dto,string username){
+        var user = dbContext.Users.First(x => x.Username == username);
         var newRoom = new Room {
             RoomName = dto.Name,
             Description = dto.Description,
-            //TODO SET OWNER BASED ON CURRENT USER  
+            Owner = user,
+            Participants = [user]
         };
 
         dbContext.Rooms.Add(newRoom);
@@ -19,7 +21,7 @@ public class RoomService(AppDbContext dbContext){
     }
 
     public  IEnumerable<Room> GetAllRooms(){
-        return dbContext.Rooms;
+        return dbContext.Rooms.Include(r => r.Owner).Include(r => r.Participants);
     }
 
     internal IEnumerable<Message> GetRoomMessages(string roomId, int? limit)
