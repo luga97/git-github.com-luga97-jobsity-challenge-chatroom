@@ -4,21 +4,28 @@ import {useAuth} from "./context/auth/useAuth"
 import {Navigate, Outlet, Route, Routes} from "react-router-dom"
 import {LoginPage} from "./pages/LoginPage"
 import {NotFoundPage} from "./pages/NotFoundPage"
+import {LoadingProvider} from "./context/loading/loadingContext"
+import {useLoading} from "./context/loading/useLoading"
+import {SignUpPage} from "./pages/SignUpPage"
 //import {NotFoundPage} from "./pages/NotFoundPage"
 
 function App() {
   return (
-    <AuthProvider>
-      <Routes>
-        <Route element={<ProtectedLayout />}>
-          <Route path="/" element={<HomePage />} />
-        </Route>
-        <Route element={<UnprotectedLayout />}>
-          <Route path="/login" element={<LoginPage />} />
-        </Route>
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-    </AuthProvider>
+    <LoadingProvider>
+      <AuthProvider>
+        <Routes>
+          <Route element={<ProtectedLayout />}>
+            <Route path="/" element={<HomePage />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Route>
+          <Route element={<UnprotectedLayout />}>
+            <Route path="/signin" element={<LoginPage />} />
+            <Route path="/signup" element={<SignUpPage />} />
+          </Route>
+        </Routes>
+        <LoadingOverlay />
+      </AuthProvider>
+    </LoadingProvider>
   )
 }
 
@@ -30,7 +37,7 @@ export function ProtectedLayout() {
   const {token} = useAuth()
 
   if (!token) {
-    return <Navigate to="/login" />
+    return <Navigate to="/signin" />
   }
 
   return <Outlet />
@@ -58,6 +65,19 @@ export function Secret() {
       <h1>This is a Secret page</h1>
       <button onClick={handleLogout}>Logout</button>
     </div>
+  )
+}
+
+// Componente para mostrar el overlay de carga global
+function LoadingOverlay() {
+  const {loading} = useLoading()
+
+  return (
+    loading && (
+      <div className="loading-overlay">
+        <div className="loading-indicator">Loading...</div>
+      </div>
+    )
   )
 }
 

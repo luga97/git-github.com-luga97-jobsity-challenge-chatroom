@@ -1,33 +1,34 @@
-import {Link} from "react-router-dom"
 import {useState} from "react"
 import {useEndpoints} from "../hooks/useEndpoints"
+import {Link} from "react-router-dom"
 
-export function LoginPage() {
+export function SignUpPage() {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
-  const {sigin} = useEndpoints()
+  const {sigup} = useEndpoints()
   function handleSignIn() {
     if (!username || !password) {
       setError("Username and password required")
       return
     }
     setError("")
-    sigin(username, password, loginFailedHandler)
+    sigup(username, password, loginFailedHandler)
   }
 
   function loginFailedHandler() {
-    setError("User or password wrong, please try again")
+    setError("error")
   }
 
   return (
     <div
       onKeyUp={(e) => {
+        console.log(e.key)
         return e.key == "Enter" && handleSignIn()
       }}
       className="h-screen flex-col bg-blue-100 flex justify-center items-center"
     >
-      <span className="text-2xl font-semibold text-gray-700">Sign In</span>
+      <span className="text-2xl font-semibold text-gray-700">Sign Up</span>
       <span className="text-sm text-gray-500 font-semibold mb-4 mt-2">
         Welcome to Chatrooms
       </span>
@@ -73,9 +74,9 @@ export function LoginPage() {
         </button>
         {error && <span className="text-center text-red-500">{error}</span>}
         <span className="text-center text-sm text-gray-500">
-          Don't have an account?{" "}
-          <Link to={"/signUp"}>
-            <span className="text-blue-500 cursor-pointer">Signup now</span>
+          Already have an account?{" "}
+          <Link to={"/signIn"}>
+            <span className="text-blue-500 cursor-pointer">Signin now</span>
           </Link>
         </span>
       </div>
