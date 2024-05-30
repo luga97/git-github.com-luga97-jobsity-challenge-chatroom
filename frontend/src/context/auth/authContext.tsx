@@ -1,6 +1,4 @@
 import React, {createContext, useState} from "react"
-import axios from "axios"
-import {useNavigate} from "react-router-dom"
 
 export type AuthContextType = {
   token: string
@@ -11,29 +9,21 @@ export type AuthContextType = {
 export const AuthContext = createContext<AuthContextType | null>(null)
 
 export const AuthProvider = ({children}: {children: React.ReactNode}) => {
-  const [token, setToken] = useState(localStorage.getItem("token") || "")
-  const navigate = useNavigate()
+  const [token, setStateToken] = useState(localStorage.getItem("token") || "")
 
-  const login = (token: string) => {
+  function setToken(token: string) {
     localStorage.setItem("token", token)
-    setToken(token)
-    // Configurar el token en el header de Axios después del inicio de sesión
-    axios.defaults.headers.common["Authorization"] = `Bearer ${token}`
-
-    navigate("/")
+    setStateToken(token)
   }
 
-  const logout = () => {
+  function releaseToken() {
     localStorage.removeItem("token")
-    setToken("")
-    // Eliminar el token del header de Axios después del cierre de sesión
-    delete axios.defaults.headers.common["Authorization"]
-    navigate("/")
+    setStateToken("")
   }
   //<AuthContext.Provider value={{token, login, logout}}>{children}</AuthContext.Provider>
 
   return (
-    <AuthContext.Provider value={{token, setToken: login, releaseToken: logout}}>
+    <AuthContext.Provider value={{token, setToken, releaseToken}}>
       {children}
     </AuthContext.Provider>
   )

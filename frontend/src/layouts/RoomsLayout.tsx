@@ -2,10 +2,25 @@ import {useAuth} from "../context/auth/useAuth"
 import {useParams} from "react-router-dom"
 import {MdLogout} from "react-icons/md"
 import {RoomList} from "../pages/RoomList"
+import {useEndpoints} from "../hooks/useEndpoints"
+import {useEffect, useState} from "react"
+import {Room} from "../types"
 
 export function RoomsLayout() {
+  const [rooms, setRooms] = useState<Room[]>([])
   const {releaseToken} = useAuth()
   const {id} = useParams()
+  const {getAllRooms} = useEndpoints()
+
+  function handleRooms(data: unknown) {
+    console.log(data)
+    setRooms(data as Room[])
+  }
+
+  useEffect(() => {
+    getAllRooms(handleRooms)
+  }, [])
+
   //console.log("id", id)
   const handleLogout = () => {
     releaseToken()
@@ -19,7 +34,7 @@ export function RoomsLayout() {
     <div
       id="focusable"
       tabIndex={0}
-      className="flex w-full h-screen"
+      className="flex w-full h-screen "
       onKeyUp={(e) => {
         if (e.key == "Escape") {
           console.log("escape, capture close chat")
@@ -37,7 +52,7 @@ export function RoomsLayout() {
             <span>Log out</span>
           </button>
         </div>
-        <RoomList />
+        <RoomList rooms={rooms} />
         <div
           onClick={handleCreateRoom}
           className="bg-sky-800 text-white p-2 text-center mt-4 cursor-pointer rounded-xl"

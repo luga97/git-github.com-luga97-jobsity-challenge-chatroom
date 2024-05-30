@@ -1,28 +1,24 @@
 import {FaLock} from "react-icons/fa"
 import {useNavigate} from "react-router-dom"
+import {Room} from "../types"
 
-export function ChatRoomsListItem({
-  title,
-  description,
-  participants,
-  userBellow,
-}: {
-  title: string
-  description: string
-  participants: number
-  userBellow: boolean
-}) {
+export function RoomsListItem({room}: {room: Room}) {
   const navigate = useNavigate()
+
+  const description = room.description
+  const participants = room.participants.length
+  const title = room.roomName
+  const userBellow = room.participants.some((x) => x.username == "luis2") //todo change
   function handleClick() {
     if (!userBellow) {
       alert("necesitas unirte")
       return
     }
-    navigate(`/1`)
+    navigate(`/${room.id}`)
   }
   return (
     <li
-      className={`relative flex flex-col w-full rounded ${
+      className={`relative flex flex-col w-full min-w-80 rounded-xl shadow-sm border border-gray-300 ${
         userBellow ? "bg-white" : "bg-gray-200"
       } p-4 hover:cursor-pointer`}
       onClick={handleClick}
