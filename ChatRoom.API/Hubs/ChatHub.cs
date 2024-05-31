@@ -1,51 +1,95 @@
+using ChatRoom.API.DTOs;
+using ChatRoom.API.Entities;
 using ChatRoom.API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
 namespace ChatRoom.API.Hubs;
 
+[Authorize]
 public class ChatHub(RoomService roomService) : Hub
 {
-
-        // Método que se llama cuando un cliente se conecta al Hub
     public override async Task OnConnectedAsync()
     {
         Console.WriteLine("connected");
+        await Task.CompletedTask;
+    }
 
-        // Opcional: Lógica inicial cuando un usuario se conecta
-        await base.OnConnectedAsync();
+    public async Task<dynamic> GetRooms()
+    {
+        // Obtener la lista de chat rooms desde la base de datos o cualquier fuente de datos
+        IEnumerable<Room> rooms = roomService.GetAllRooms();
+        var ids = rooms.Select(r => r.Id.ToString());
+        foreach (var roomId in ids)
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
+        }
+        var result = rooms.Select(MapRoomToDTO);
+        return result;
+    }
+
+    private static dynamic MapRoomToDTO(Room room)
+    {
+        Console.WriteLine("total msgs " + room.Messages.Count);
+        return new
+        {
+            Id = room.Id.ToString(),
+            RoomName = room.RoomName,
+            Description = room.Description,
+            Messages = room.Messages
+                .OrderBy(x => x.CreatedAt)
+                .TakeLast(50)
+                .Select(message => MapMessageDTO(message, room.Id.ToString()))
+        };
+    }
+
+    private static dynamic MapMessageDTO(Message message, string roomId)
+    {
+        return new
+        {
+            RoomId = roomId,
+            Username = message.Users.Username,
+            Text = message.Text,
+            CreatedAt = message.CreatedAt
+        };
     }
 
     // Método que se llama cuando un cliente se desconecta del Hub
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         Console.WriteLine("disconnected");
-
+        var rooms = roomService.GetAllRooms();
+        foreach (var room in rooms)
+        {
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, room.Id.ToString());
+        }
         // Opcional: Lógica para cuando un usuario se desconecta, como removerlo de grupos
-        await base.OnDisconnectedAsync(exception);
     }
 
 
-    public async Task SendMessage(string roomId,string user, string message)
+    public async Task SendMessage(NewMessageDTO dto)
     {
-        roomService.SaveRoomMessage(roomId,user,message);
-        Console.WriteLine("received message");
-        await Clients.Group(roomId).SendAsync("NewMessage", roomId,user, message);
+        Console.WriteLine("received message " + dto.RoomId + dto.Username + dto.Text);
+        var message = roomService.SaveRoomMessage(dto);
+        if(message != null){
+            object result = MapMessageDTO(message,dto.RoomId);
+            await Clients.Group(dto.RoomId).SendAsync("NewMessage", result);
+        }
+  
     }
 
-        // Método para que el usuario se una a un grupo específico
-    public async Task JoinRoom(string roomId,string username)
+    public async Task CreateRoom(CreateRoomDTO dto)
     {
-        Console.WriteLine("received joined room");
+        Console.WriteLine("creating room");
+        var room = roomService.CreateRoom(dto, Context.UserIdentifier!);
+        object result = MapRoomToDTO(room);
+        var roomId = room.Id.ToString();
+        await Clients.All.SendAsync("RoomCreated", result);
         await Groups.AddToGroupAsync(Context.ConnectionId, roomId);
-        await Clients.Group(roomId).SendAsync("UserJoinedRoom", $"{username} just joined the room.");
     }
 
-    // Método para que el usuario abandone un grupo específico
-    public async Task LeaveRoom(string roomId)
+    public dynamic GetMessages(string roomId)
     {
-        Console.WriteLine("leavingRoom");
-
-        await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId);
-        await Clients.Group(roomId).SendAsync("UserLeavedRoom", $"{Context.ConnectionId} just leave the room.");
+        return roomService.GetRoomMessages(roomId, 50).Select(message => MapMessageDTO(message,roomId));
     }
 }

@@ -17,7 +17,7 @@ type EndpointWrapperParams = {
 
 export function useEndpoints() {
   const {startLoading, stopLoading} = useLoading()
-  const {token, setToken} = useAuth()
+  const {token, setToken, setUsername} = useAuth()
   const apierrorManager = useApiErrorManager()
 
   async function endpointWrapper({
@@ -53,6 +53,13 @@ export function useEndpoints() {
   }
 
   return {
+    fetchLastMessages: async (roomId: string, resultHandler: (data: unknown) => void) => {
+      await endpointWrapper({
+        action: "GET",
+        route: `${baseUrl}/Rooms/${roomId}/messages?limit=50`,
+        resultHandler,
+      })
+    },
     sigup: async (username: string, password: string, errorHandler: () => void) => {
       await endpointWrapper({
         action: "POST",
@@ -61,6 +68,7 @@ export function useEndpoints() {
         errorHandler,
         resultHandler: (data) => {
           setToken(data as string)
+          setUsername(username)
         },
       })
     },

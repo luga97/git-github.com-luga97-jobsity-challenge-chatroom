@@ -9,10 +9,9 @@ namespace ChatRoom.API.Services;
 
 public class UserService
 {
-    private readonly IHubContext<ChatHub> hubContext;
     private readonly AppDbContext dbContext;
 
-    public UserService(IHubContext<ChatHub> hubContext,AppDbContext dbContext)
+    public UserService(AppDbContext dbContext)
     {
         this.dbContext = dbContext;
     }

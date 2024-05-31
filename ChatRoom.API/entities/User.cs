@@ -10,5 +10,4 @@ public class User {
     public string PasswoordHash { get; set; } = string.Empty;
     public string PasswordSalt { get; set; } = string.Empty;
     public List<Room> Rooms { get; set; } = [];
-    public List<Room> OwnedRooms { get; set; } = [];
 }

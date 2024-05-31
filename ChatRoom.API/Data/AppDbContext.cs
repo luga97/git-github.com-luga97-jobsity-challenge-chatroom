@@ -44,10 +44,6 @@ public class AppDbContext : DbContext
             .ValueGeneratedOnAdd();
 
         builder.Entity<Room>()
-            .HasOne(r => r.Owner)
-            .WithMany(u => u.OwnedRooms);
-
-        builder.Entity<Room>()
             .HasMany(r => r.Messages)
             .WithOne(m => m.Room);
     }
@@ -68,10 +64,6 @@ public class AppDbContext : DbContext
         builder.Entity<User>()
                 .Property(u => u.Username)
                 .IsRequired();
-
-        builder.Entity<User>()
-            .HasMany(u => u.Rooms)
-            .WithMany(r => r.Participants);
 
     }
 }

@@ -8,8 +8,7 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddSignalR();
-
+builder.Services.AddSignalR().AddJsonProtocol(x => x.PayloadSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
@@ -65,15 +64,15 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors(options => options
     .WithOrigins("http://localhost:5173")
+    .AllowCredentials()
     .AllowAnyMethod()
     .AllowAnyHeader()
-    .AllowCredentials()
 );
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapHub<ChatHub>("/chathub");
+app.MapHub<ChatHub>("/chathub").RequireAuthorization();
 app.MapControllers();
 app.Run();
 

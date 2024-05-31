@@ -23,7 +23,6 @@ export function SignUpPage() {
   return (
     <div
       onKeyUp={(e) => {
-        console.log(e.key)
         return e.key == "Enter" && handleSignIn()
       }}
       className="h-screen flex-col bg-blue-100 flex justify-center items-center"
@@ -70,7 +69,7 @@ export function SignUpPage() {
           className="rounded bg-blue-500 text-white p-2 focus:outline-blue-300"
           onClick={handleSignIn}
         >
-          Login
+          Sign Up
         </button>
         {error && <span className="text-center text-red-500">{error}</span>}
         <span className="text-center text-sm text-gray-500">

@@ -11,18 +11,6 @@ namespace ChatRoom.API.Controllers;
 [Route("[Controller]")]
 [Authorize]
 public class RoomsController(RoomService service): ControllerBase {
-    /// <summary>
-    /// Create a new room
-    /// </summary>
-    /// <param name="dto"></param>
-    /// <returns></returns>
-    [HttpPost]
-    public IActionResult CreateNewRoom([FromBody] CreateRoomDTO dto){
-        var username = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if(username == null) return Unauthorized();
-        service.CreateRoom(dto,username);
-        return Ok();
-    }
 
     [HttpGet()]
     public IActionResult GetAllRooms(){

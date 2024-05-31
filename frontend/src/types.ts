@@ -1,20 +1,18 @@
-export interface User {
-  id: number
-  username: string
-  passwordHash: string
-  passwordSalt: string
-  rooms: (Room | null)[]
-  ownedRooms: (Room | null)[]
-}
-
-export interface Room {
-  id: number
-  roomName: string
+export interface RoomDTO {
+  id: string
+  name: string
   description: string
-  owner: User
-  createdAt: string
-  messages: Message[] // Tipo de mensaje desconocido
-  participants: User[]
+  messages: MessageDTO[]
 }
 
-export interface Message {}
+export type MessageDTO = {
+  roomId: string
+  username: string
+  text: string
+  createdAt?: Date
+}
+
+export type CreateRoomDTO = {
+  name: string
+  description: string
+}

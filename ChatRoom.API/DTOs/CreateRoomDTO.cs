@@ -10,9 +10,5 @@ public record CreateRoomDTO(
 
     [Required]
     [NotNull]
-    string Owner, 
-
-    [Required]
-    [NotNull]
     string Description
 );
