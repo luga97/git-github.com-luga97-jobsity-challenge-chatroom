@@ -21,20 +21,43 @@ class Program
         consumer.Received += async (model, ea) =>
         {
             var body = ea.Body.ToArray();
-            var message = Encoding.UTF8.GetString(body);
-            var request = JsonConvert.DeserializeObject<StockRequest>(message);
-            var stockQuote = await GetStockQuote(request.StockCode);
-            var resultMessage = $"{request.StockCode.ToUpper()} quote is ${stockQuote} per share";
-            var stockResponse = new StockResponse(request.Room, resultMessage);
-            var responseBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(stockResponse));
-
-            channel.BasicPublish(exchange: "", routingKey: "chat_messages", basicProperties: null, body: responseBytes);
+            await ProcessMessage(channel, body);
         };
 
         channel.BasicConsume(queue: "stock_requests", autoAck: true, consumer: consumer);
 
         Console.WriteLine("Bot is running...");
         Console.ReadLine();
+    }
+
+    private static async Task ProcessMessage(IModel channel, byte[] body)
+    {
+        var message = Encoding.UTF8.GetString(body);
+        var request = JsonConvert.DeserializeObject<StockRequest>(message);
+        string? resultMessage = null;
+        if (request == null)
+        {
+            Console.WriteLine("stock request can't not be processed, ignoring message");
+            return;
+        };
+
+        try
+        {
+            var stockQuote = await GetStockQuote(request.StockCode);
+            resultMessage = $"{request?.StockCode.ToUpper()} quote is ${stockQuote} per share";
+        }
+        catch (StockNotFoundException)
+        {
+            resultMessage = $"Oops 😶‍🌫️, the stock stock code \"{request.StockCode}\" wasn't found. Please check it and try again.";
+        }
+        catch (Exception)
+        {
+            resultMessage = $"An unexpected error occurred: please try again later.";
+        }
+        var stockResponse = new StockResponse(request!.Room, resultMessage);
+        var responseBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(stockResponse));
+
+        channel.BasicPublish(exchange: "", routingKey: "chat_messages", basicProperties: null, body: responseBytes);
     }
 
     private static async Task<decimal> GetStockQuote(string stockCode)
@@ -46,12 +69,18 @@ class Program
         var records = csv.GetRecords<dynamic>();
         foreach (var record in records)
         {
+            if (record.Close == "N/D") throw new StockNotFoundException();
             return Convert.ToDecimal(record.Close);
         }
-        return 0;
+        return default;
     }
 }
 
 public record StockRequest(string Room, string StockCode);
 
 public record StockResponse(string Room, string Message);
+
+public class StockNotFoundException : Exception
+{
+    public StockNotFoundException() : base("Stock not found.") { }
+}

@@ -34,7 +34,6 @@ public class ChatHub(RoomService roomService, RabbitMQService rabbitMQService) :
 
     private static dynamic MapRoomToDTO(Room room)
     {
-        Console.WriteLine("total msgs " + room.Messages.Count);
         return new
         {
             Id = room.Id.ToString(),
@@ -62,11 +61,6 @@ public class ChatHub(RoomService roomService, RabbitMQService rabbitMQService) :
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         Console.WriteLine("disconnected");
-        var rooms = roomService.GetAllRooms();
-        foreach (var room in rooms)
-        {
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, room.Id.ToString());
-        }
         // Opcional: Lógica para cuando un usuario se desconecta, como removerlo de grupos
     }
 
@@ -96,6 +90,7 @@ public class ChatHub(RoomService roomService, RabbitMQService rabbitMQService) :
             message = roomService.SaveRoomMessage(dto);
             if (message != null)
             {
+                System.Console.WriteLine("inside condition");
                 object result = MapMessageDTO(message, dto.RoomId);
                 await Clients.Group(dto.RoomId).SendAsync("NewMessage", result);
             }

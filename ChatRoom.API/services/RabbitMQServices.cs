@@ -47,7 +47,7 @@ public class RabbitMQService : IDisposable
         await hubContext.Clients.Group(response.Room).SendAsync("NewMessage", new
         {
             RoomId = response.Room,
-            Username = "StockBot 🪙🤖",
+            Username = "StockBot🪙🤖",
             Text = response.Message,
             CreatedAt = DateTime.UtcNow
         });
