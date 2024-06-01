@@ -110,6 +110,9 @@ This project is a chatroom system developed with .NET, SignalR, React with Vite,
       ![RabbitMQ example 2](https://github.com/luga97/jobsity-challenge-chatroom/assets/32438765/4f5a94d9-0f52-4daa-90fb-531a92af7e26)
       
 3. **Code Examples**
+  - Test stock quote getter in StockBot
+
+    ![image](https://github.com/luga97/jobsity-challenge-chatroom/assets/32438765/6b4fb6c0-ccd6-4614-842f-990630121af0)
 
 ## Project Structure
 
