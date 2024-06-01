@@ -74,16 +74,29 @@ public class ChatHub(RoomService roomService, RabbitMQService rabbitMQService) :
         {
             var stockCode = dto.Text.Substring(dto.Text.IndexOf('=') + 1);
             var request = new StockRequestDTO(dto.RoomId, stockCode);
-
-            var body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(request));
-            channel.BasicPublish(exchange: "", routingKey: "stock_requests", basicProperties: null, body: body);
-            await Clients.Group(dto.RoomId).SendAsync("NewMessage", new
+            var newMessage = new
             {
                 RoomId = dto.RoomId,
                 Username = dto.Username,
                 Text = dto.Text,
                 CreatedAt = DateTime.Now
-            });
+            };
+            var body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(request));
+            try
+            {
+                channel.BasicPublish(exchange: "", routingKey: "stock_requests", basicProperties: null, body: body);
+            }
+            catch (Exception)
+            {
+                newMessage = new
+                {
+                    RoomId = dto.RoomId,
+                    Username = "System",
+                    Text = "Something wrong happen, the command was not send",
+                    CreatedAt = DateTime.Now
+                };
+            }
+            await Clients.Group(dto.RoomId).SendAsync("NewMessage", newMessage);
         }
         else
         {

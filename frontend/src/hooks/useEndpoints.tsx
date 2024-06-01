@@ -81,6 +81,7 @@ export function useEndpoints() {
         errorHandler,
         resultHandler: (data) => {
           setToken(data as string)
+          setUsername(username)
         },
       })
     },
