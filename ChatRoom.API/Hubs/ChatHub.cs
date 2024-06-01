@@ -34,7 +34,7 @@ public class ChatHub(RoomService roomService) : Hub
         return new
         {
             Id = room.Id.ToString(),
-            RoomName = room.RoomName,
+            Name = room.Name,
             Description = room.Description,
             Messages = room.Messages
                 .OrderBy(x => x.CreatedAt)

@@ -25,7 +25,7 @@ export function ChatComponent({roomId}: {roomId?: string}) {
 
   return (
     // <div className="flex flex-col max-h-screen">
-    <div className="flex flex-col relative  h-screen  max-h-screen">
+    <div className="flex flex-col relative pt-2 h-screen  max-h-screen">
       {messages.length > 0 ? (
         <div
           ref={chatRef}

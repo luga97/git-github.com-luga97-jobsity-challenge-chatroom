@@ -12,7 +12,7 @@ public class RoomService(AppDbContext dbContext){
     public Room CreateRoom(CreateRoomDTO dto,string username){
         var user = dbContext.Users.First(x => x.Username == username);
         var newRoom = new Room {
-            RoomName = dto.Name,
+            Name = dto.Name,
             Description = dto.Description
         };
 
