@@ -1,14 +1,18 @@
+using System.Text;
 using ChatRoom.API.DTOs;
 using ChatRoom.API.Entities;
 using ChatRoom.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Newtonsoft.Json;
+using RabbitMQ.Client;
 
 namespace ChatRoom.API.Hubs;
 
 [Authorize]
-public class ChatHub(RoomService roomService) : Hub
+public class ChatHub(RoomService roomService, RabbitMQService rabbitMQService) : Hub
 {
+    private readonly IModel channel = rabbitMQService.GetChannel();
     public override async Task OnConnectedAsync()
     {
         Console.WriteLine("connected");
@@ -70,12 +74,36 @@ public class ChatHub(RoomService roomService) : Hub
     public async Task SendMessage(NewMessageDTO dto)
     {
         Console.WriteLine("received message " + dto.RoomId + dto.Username + dto.Text);
-        var message = roomService.SaveRoomMessage(dto);
-        if(message != null){
-            object result = MapMessageDTO(message,dto.RoomId);
-            await Clients.Group(dto.RoomId).SendAsync("NewMessage", result);
+        Message? message = null;
+
+        if (dto.Text.StartsWith("/stock="))
+        {
+            var stockCode = dto.Text.Substring(dto.Text.IndexOf('=') + 1);
+            var request = new StockRequestDTO(dto.RoomId, stockCode);
+
+            var body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(request));
+            channel.BasicPublish(exchange: "", routingKey: "stock_requests", basicProperties: null, body: body);
+            await Clients.Group(dto.RoomId).SendAsync("NewMessage", new
+            {
+                RoomId = dto.RoomId,
+                Username = dto.Username,
+                Text = dto.Text,
+                CreatedAt = DateTime.Now
+            });
         }
-  
+        else
+        {
+            message = roomService.SaveRoomMessage(dto);
+            if (message != null)
+            {
+                object result = MapMessageDTO(message, dto.RoomId);
+                await Clients.Group(dto.RoomId).SendAsync("NewMessage", result);
+            }
+        }
+
+
+
+
     }
 
     public async Task CreateRoom(CreateRoomDTO dto)
@@ -90,6 +118,6 @@ public class ChatHub(RoomService roomService) : Hub
 
     public dynamic GetMessages(string roomId)
     {
-        return roomService.GetRoomMessages(roomId, 50).Select(message => MapMessageDTO(message,roomId));
+        return roomService.GetRoomMessages(roomId, 50).Select(message => MapMessageDTO(message, roomId));
     }
 }
