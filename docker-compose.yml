@@ -1,6 +1,30 @@
 version: "3.8"
 
 services:
+  chatroom:
+    container_name: chatroom
+    build: ./ChatRoom.API
+    ports:
+      - "5000:8080"
+    environment:
+      - RUNNING_WITH_DOCKER=true
+    depends_on:
+      - rabbitmq
+
+  bot:
+    build: ./ChatRoom.StockBot
+    environment:
+      - RUNNING_WITH_DOCKER=true
+    depends_on:
+      - rabbitmq
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - chatroom
+
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq

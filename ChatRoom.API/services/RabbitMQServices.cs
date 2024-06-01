@@ -15,7 +15,16 @@ public class RabbitMQService : IDisposable
 
     public RabbitMQService(IServiceProvider serviceProvider)
     {
-        var factory = new ConnectionFactory() { HostName = "localhost", UserName = "guest", Password = "guest" };
+        var envVar = Environment.GetEnvironmentVariable("RUNNING_WITH_DOCKER");
+
+        string rabbitHost = "localhost";
+
+        if (bool.TryParse(envVar, out var isRunningWithDocker) && isRunningWithDocker)
+        {
+            rabbitHost = "rabbitmq";
+        }
+        Console.WriteLine("rabbitmq host is '{0}'", rabbitHost);
+        var factory = new ConnectionFactory() { HostName = rabbitHost };
         _connection = factory.CreateConnection();
         _channel = _connection.CreateModel();
         _serviceProvider = serviceProvider;

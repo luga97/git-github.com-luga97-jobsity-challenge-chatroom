@@ -11,7 +11,16 @@ class Program
 
     public static async Task Main(string[] args)
     {
-        var factory = new ConnectionFactory() { HostName = "localhost" };
+        var envVar = Environment.GetEnvironmentVariable("RUNNING_WITH_DOCKER");
+
+        string rabbitHost = "localhost";
+
+        if (bool.TryParse(envVar, out var isRunningWithDocker) && isRunningWithDocker)
+        {
+            rabbitHost = "rabbitmq";
+        }
+        System.Console.WriteLine("rabbitmq host is '{0}'", rabbitHost);
+        var factory = new ConnectionFactory() { HostName = rabbitHost };
         using var connection = factory.CreateConnection();
         using var channel = connection.CreateModel();
         channel.QueueDeclare(queue: "stock_requests", durable: false, exclusive: false, autoDelete: false, arguments: null);
@@ -27,7 +36,7 @@ class Program
         channel.BasicConsume(queue: "stock_requests", autoAck: true, consumer: consumer);
 
         Console.WriteLine("Bot is running...");
-        Console.ReadLine();
+        await Task.Run(() => Thread.Sleep(Timeout.Infinite));
     }
 
     private static async Task ProcessMessage(IModel channel, byte[] body)

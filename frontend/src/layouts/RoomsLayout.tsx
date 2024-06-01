@@ -3,7 +3,10 @@ import {useParams} from "react-router-dom"
 import {SignalRProvider} from "../context/signalR/signalRContext"
 import {RoomsSideBar} from "../components/RoomsSideBar"
 import {ChatComponent} from "../components/ChatComponent"
-const SIGNALR_URL = "http://localhost:5149/chathub"
+const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:5149"
+
+const SIGNALR_URL = `${apiUrl}/chathub`
+
 export function RoomsLayout() {
   const {id: paramId} = useParams()
   const {token} = useAuth()

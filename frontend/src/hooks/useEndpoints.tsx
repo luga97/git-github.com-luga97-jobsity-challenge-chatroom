@@ -3,7 +3,7 @@ import {useAuth} from "../context/auth/useAuth"
 import {useApiErrorManager} from "./useApiErrorManager"
 import {useLoading} from "../context/loading/useLoading"
 
-const baseUrl = "http://localhost:5149"
+const baseUrl = import.meta.env.VITE_API_URL ?? "http://localhost:5149"
 
 type EndpointWrapperParams = {
   action: "GET" | "POST"
