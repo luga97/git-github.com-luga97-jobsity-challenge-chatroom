@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
-class Program
+public class Program
 {
     private const string StockApiUrl = "https://stooq.com/q/l/?s={0}&f=sd2t2ohlcv&h&e=csv";
 
@@ -39,7 +39,7 @@ class Program
         await Task.Run(() => Thread.Sleep(Timeout.Infinite));
     }
 
-    private static async Task ProcessMessage(IModel channel, byte[] body)
+    public static async Task ProcessMessage(IModel channel, byte[] body)
     {
         var message = Encoding.UTF8.GetString(body);
         var request = JsonConvert.DeserializeObject<StockRequest>(message);
@@ -69,7 +69,7 @@ class Program
         channel.BasicPublish(exchange: "", routingKey: "chat_messages", basicProperties: null, body: responseBytes);
     }
 
-    private static async Task<decimal> GetStockQuote(string stockCode)
+    public static async Task<decimal> GetStockQuote(string stockCode)
     {
         using var httpClient = new HttpClient();
         var response = await httpClient.GetStringAsync(string.Format(StockApiUrl, stockCode));
